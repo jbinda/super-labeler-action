@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import { GitHub } from '@actions/github';
 
-import { Config } from '.';
+import { Config } from './types';
 import { createLabel, getLabels, Repo, updateLabel } from './api';
 import { formatColour } from './utils';
 

@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import { GitHub } from '@actions/github';
 
-import { Config } from '.';
+import { Config } from './types';
 import { addLabel, removeLabel, Repo } from './api';
 import {
   getIssueConditionHandler,
@@ -114,6 +114,7 @@ export const applyPRLabels = async ({
   for (const [label, opts] of Object.entries(config)) {
     core.debug(`Label: ${label}`);
 
+    console.log(opts.conditions)
     const matches = forConditions<PRCondition>(opts.conditions, (condition) => {
       const handler = getPRConditionHandler(condition);
       return handler?.(condition as any, prProps) || false;
