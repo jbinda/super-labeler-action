@@ -9,13 +9,8 @@ export const formatColour = (colour: string) => {
 export const processRegExpPattern = (pattern: string) => {
   const matchDelimiters = pattern.match(/^\/(.*)\/(.*)$/);
 
-  const regexp = (matchDelimiters || []).slice(1);
-  const flags = regexp.pop();
-  const source = regexp.join('');
-
-  console.log(source)
+  const [source ,flags] = (matchDelimiters || []).slice(1);
   
-  return flags
-    ? RegExp.apply(RegExp, [source, flags])
-    : new RegExp(pattern);
+  return new RegExp(source || pattern, flags);
 };
+
