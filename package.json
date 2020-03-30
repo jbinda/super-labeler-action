@@ -11,7 +11,10 @@
   },
   "scripts": {
     "build": "ncc build src/index.ts -o dist",
-    "format": "prettier --write src/**/*.ts"
+    "format": "prettier --write src/**/*.ts",
+    "dev": "source .env && node dist/index.js",
+    "dev:pr": "source .env && set GITHUB_EVENT_PATH=event.pr.json && node dist/index.js",
+    "dev:issue": "source .env && set GITHUB_EVENT_PATH=event.issue.json && node dist/index.js"
   },
   "prettier": {
     "arrowParens": "always",
