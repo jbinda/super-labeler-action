@@ -10308,8 +10308,9 @@ const STATES = {
     open: "OPEN",
     closed: "CLOSED"
 };
+const normalize = (text) => (text || '').toUpperCase();
 const isOpen = (condition, issue) => {
-    return (issue.state || '').toUpperCase() === (condition.value ? STATES.open : STATES.closed);
+    return normalize(issue.state) === normalize(condition.value ? STATES.open : STATES.closed);
 };
 exports.default = [TYPE, isOpen];
 
