@@ -13,6 +13,8 @@ export const processRegExpPattern = (pattern: string) => {
   const flags = regexp.pop();
   const source = regexp.join('');
 
+  console.log(source)
+  
   return flags
     ? RegExp.apply(RegExp, [source, flags])
     : new RegExp(pattern);
