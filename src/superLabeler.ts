@@ -5,7 +5,6 @@ import * as github from '@actions/github';
 import { GitHub } from '@actions/github';
 
 import { applyIssueLabels, applyPRLabels } from './applyLabels';
-// import { IssueCondition, PRCondition } from './conditions';
 import { Config, Options } from './types';
 import {
   IssueContext,
@@ -33,11 +32,6 @@ class ActionSuperLabeler {
     console.log(message);
   }
 
-  async showContext () {
-    console.log(this.opts)
-    console.log('context', context.repo)
-  }
-
 async run () {
   try {
 
@@ -61,7 +55,6 @@ async run () {
       }
       core.debug(`PR context: ${JSON.stringify(ctx)}`);
 
-      console.log(ctx.prProps.files)
       curContext = {
         type: 'pr',
         context: ctx,
@@ -80,7 +73,6 @@ async run () {
     } else {
       return;
     }
-    console.log(curContext)
 
     if (!dryRun) await syncLabels({ client: this.client, repo, config: config.labels });
 
@@ -92,8 +84,6 @@ async run () {
       },
       {},
     );
-    
-    console.log(labelIdToName)
 
     if (curContext.type === 'pr') {
       await applyPRLabels({

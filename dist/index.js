@@ -9831,7 +9831,6 @@ class ActionSuperLabeler {
                         throw new Error('pull request not found on context');
                     }
                     core.debug(`PR context: ${JSON.stringify(ctx)}`);
-                    console.log(ctx.prProps.files);
                     curContext = {
                         type: 'pr',
                         context: ctx,
@@ -9851,7 +9850,8 @@ class ActionSuperLabeler {
                 else {
                     return;
                 }
-                console.log(curContext);
+                if (dryRun)
+                    return;
                 if (!dryRun)
                     yield syncLabels_1.default({ client: this.client, repo, config: config.labels });
                 // Mapping of label ids to Github names
