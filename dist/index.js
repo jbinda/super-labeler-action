@@ -8825,12 +8825,22 @@ const syncLabels = ({ client, config, repo, }) => __awaiter(void 0, void 0, void
             if (label.description !== configLabel.description ||
                 label.color !== utils_1.formatColour(configLabel.color)) {
                 core.debug(`Recreate ${JSON.stringify(configLabel)} (prev: ${JSON.stringify(label)})`);
-                yield api_1.updateLabel({ client, repo, label: configLabel });
+                try {
+                    yield api_1.updateLabel({ client, repo, label: configLabel });
+                }
+                catch (e) {
+                    core.error(`Label update error: ${e.message}`);
+                }
             }
         }
         else {
             core.debug(`Create ${JSON.stringify(configLabel)}`);
-            yield api_1.createLabel({ client, repo, label: configLabel });
+            try {
+                yield api_1.createLabel({ client, repo, label: configLabel });
+            }
+            catch (e) {
+                core.error(`Label create error: ${e.message}`);
+            }
         }
     }
 });
@@ -26616,8 +26626,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getLabels = ({ client, repo, }) => __awaiter(void 0, void 0, void 0, function* () {
-    const labels = yield client.issues.listLabelsForRepo(Object.assign({}, repo));
-    return labels.data.map((label) => ({
+    const options = yield client.issues.listLabelsForRepo.endpoint.merge(Object.assign({}, repo));
+    const labels = yield client.paginate(options);
+    return labels.map((label) => ({
         name: label.name,
         description: label.description,
         color: label.color,

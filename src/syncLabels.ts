@@ -35,11 +35,21 @@ const syncLabels = async ({
             label,
           )})`,
         );
-        await updateLabel({ client, repo, label: configLabel });
+        try {
+          await updateLabel({ client, repo, label: configLabel });
+        }
+        catch(e) {
+          core.error(`Label update error: ${e.message}`)
+        }
       }
     } else {
       core.debug(`Create ${JSON.stringify(configLabel)}`);
-      await createLabel({ client, repo, label: configLabel });
+      try {
+        await createLabel({ client, repo, label: configLabel });
+      }
+      catch (e) {
+        core.error(`Label create error: ${e.message}`)
+      }
     }
   }
 };
