@@ -2762,7 +2762,7 @@ exports.formatColour = (colour) => {
 };
 exports.processRegExpPattern = (pattern) => {
     const matchDelimiters = pattern.match(/^\/(.*)\/(.*)$/);
-    const [source, flags] = (matchDelimiters || []).slice(1);
+    const [, source, flags] = matchDelimiters || [];
     return new RegExp(source || pattern, flags);
 };
 
@@ -9807,12 +9807,6 @@ class ActionSuperLabeler {
             return;
         console.log(message);
     }
-    showContext() {
-        return __awaiter(this, void 0, void 0, function* () {
-            console.log(this.opts);
-            console.log('context', context.repo);
-        });
-    }
     run() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -9850,8 +9844,6 @@ class ActionSuperLabeler {
                 else {
                     return;
                 }
-                if (dryRun)
-                    return;
                 if (!dryRun)
                     yield syncLabels_1.default({ client: this.client, repo, config: config.labels });
                 // Mapping of label ids to Github names
@@ -9859,7 +9851,6 @@ class ActionSuperLabeler {
                     acc[cur[0]] = cur[1].name;
                     return acc;
                 }, {});
-                console.log(labelIdToName);
                 if (curContext.type === 'pr') {
                     yield applyLabels_1.applyPRLabels({
                         client: this.client,
