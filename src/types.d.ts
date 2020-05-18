@@ -20,6 +20,7 @@ export interface Config {
       conditions: PRCondition[];
     };
   };
+  skip_labeling: string;
 }
 
 export interface Options {

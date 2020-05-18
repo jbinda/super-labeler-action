@@ -89,6 +89,7 @@ async run () {
       await applyPRLabels({
         client: this.client,
         config: config.pr,
+        skipLabeling: config.skip_labeling,
         labelIdToName,
         prContext: curContext.context,
         repo,
@@ -97,6 +98,7 @@ async run () {
       await applyIssueLabels({
         client: this.client,
         config: config.issue,
+        skipLabeling: config.skip_labeling,
         issueContext: curContext.context,
         labelIdToName,
         repo,

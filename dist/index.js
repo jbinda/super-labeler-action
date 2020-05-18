@@ -9865,6 +9865,7 @@ class ActionSuperLabeler {
                     yield applyLabels_1.applyPRLabels({
                         client: this.client,
                         config: config.pr,
+                        skipLabeling: config.skip_labeling,
                         labelIdToName,
                         prContext: curContext.context,
                         repo,
@@ -9874,6 +9875,7 @@ class ActionSuperLabeler {
                     yield applyLabels_1.applyIssueLabels({
                         client: this.client,
                         config: config.issue,
+                        skipLabeling: config.skip_labeling,
                         issueContext: curContext.context,
                         labelIdToName,
                         repo,
@@ -26515,6 +26517,7 @@ const forConditions = (conditions, callback) => {
     core.debug(`Matches: ${matches}`);
     return matches;
 };
+const skipLabelingLabelAssigned = (curLabels, labelIdToName, skipLabeling) => Object.values(curLabels).map(({ name }) => name).some((existingLabel) => existingLabel === labelIdToName[skipLabeling]);
 const addRemoveLabel = ({ client, curLabels, label, labelIdToName, matches, num, repo, requires, }) => __awaiter(void 0, void 0, void 0, function* () {
     const labelName = labelIdToName[label];
     const hasLabel = curLabels.filter((l) => l.name === labelName).length > 0;
@@ -26527,8 +26530,11 @@ const addRemoveLabel = ({ client, curLabels, label, labelIdToName, matches, num,
         yield api_1.removeLabel({ client, repo, num, label: labelName });
     }
 });
-exports.applyIssueLabels = ({ client, config, issueContext, labelIdToName, repo, }) => __awaiter(void 0, void 0, void 0, function* () {
+exports.applyIssueLabels = ({ client, config, skipLabeling, issueContext, labelIdToName, repo, }) => __awaiter(void 0, void 0, void 0, function* () {
     const { labels: curLabels, issueProps, num } = issueContext;
+    if (skipLabelingLabelAssigned(curLabels, labelIdToName, skipLabeling)) {
+        return;
+    }
     for (const [label, opts] of Object.entries(config)) {
         core.debug(`Label: ${label}`);
         const matches = forConditions(opts.conditions, (condition) => {
@@ -26548,8 +26554,11 @@ exports.applyIssueLabels = ({ client, config, issueContext, labelIdToName, repo,
         });
     }
 });
-exports.applyPRLabels = ({ client, config, labelIdToName, prContext, repo, }) => __awaiter(void 0, void 0, void 0, function* () {
+exports.applyPRLabels = ({ client, config, labelIdToName, skipLabeling, prContext, repo, }) => __awaiter(void 0, void 0, void 0, function* () {
     const { labels: curLabels, prProps, num } = prContext;
+    if (skipLabelingLabelAssigned(curLabels, labelIdToName, skipLabeling)) {
+        return;
+    }
     for (const [label, opts] of Object.entries(config)) {
         core.debug(`Label: ${label}`);
         console.log(opts.conditions);
