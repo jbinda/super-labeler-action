@@ -44,7 +44,7 @@ async run () {
     }
     const config: Config = JSON.parse(fs.readFileSync(configPath).toString());
     core.debug(`Config: ${JSON.stringify(config)}`);
-
+console.log(config)
     let curContext:
       | { type: 'pr'; context: PRContext }
       | { type: 'issue'; context: IssueContext };
