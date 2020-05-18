@@ -1,5 +1,15 @@
 import { IssueCondition, PRCondition } from './conditions';
 
+export interface IssueConditionConfig  {
+  requires: number;
+  conditions: IssueCondition[];
+}
+
+export interface PRConditionConfig {
+  requires: number;
+  conditions: PRCondition[];
+}
+
 export interface Config {
   labels: {
     [key: string]: {
@@ -9,16 +19,10 @@ export interface Config {
     };
   };
   issue: {
-    [key: string]: {
-      requires: number;
-      conditions: IssueCondition[];
-    };
+    [key: string]: IssueConditionConfig;
   };
   pr: {
-    [key: string]: {
-      requires: number;
-      conditions: PRCondition[];
-    };
+    [key: string]: PRConditionConfig;
   };
   skip_labeling: string;
 }

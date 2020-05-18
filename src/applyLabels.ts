@@ -3,63 +3,40 @@ import { GitHub } from '@actions/github';
 
 import { Config } from './types';
 import { addLabel, removeLabel, Repo } from './api';
-import {
-  getIssueConditionHandler,
-  getPRConditionHandler,
-  IssueCondition,
-  PRCondition,
-} from './conditions';
+import evaluator, {ConditionSetType} from './conditions/evaluator';
 import { IssueContext, PRContext, Labels } from './parseContext';
 
 type LabelIDToName =  { [key: string]: string };
-
-const forConditions = <T extends IssueCondition | PRCondition>(
-  conditions: T[],
-  callback: (condition: T) => boolean,
-) => {
-  let matches = 0;
-  for (const condition of conditions) {
-    core.debug(`Condition: ${JSON.stringify(condition)}`);
-    if (callback(condition)) {
-      matches++;
-    }
-  }
-  core.debug(`Matches: ${matches}`);
-  return matches;
-};
 
 const skipLabelingLabelAssigned = (curLabels: Labels, labelIdToName: LabelIDToName, skipLabeling: string) => Object.values(curLabels).map(({name}) => name).some((existingLabel) => existingLabel === labelIdToName[skipLabeling])
 
 const addRemoveLabel = async ({
   client,
   curLabels,
-  label,
-  labelIdToName,
-  matches,
-  num,
+  labelID,
+  labelName,
+  IDNumber,
   repo,
-  requires,
+  shouldHaveLabel,
 }: {
   client: GitHub;
   curLabels: Labels;
-  label: string;
-  labelIdToName: LabelIDToName;
-  matches: number;
-  num: number;
+  labelID: string;
+  labelName: string;
+  IDNumber: number;
   repo: Repo;
-  requires: number;
+  shouldHaveLabel: boolean;
 }) => {
-  const labelName = labelIdToName[label];
   const hasLabel = curLabels.filter((l) => l.name === labelName).length > 0;
-  if (matches >= requires && !hasLabel) {
-    core.debug(`${matches} >= ${requires} matches, adding label "${label}"...`);
-    await addLabel({ client, repo, num, label: labelName });
+  if (shouldHaveLabel && !hasLabel) {
+    core.debug(`Adding label "${labelID}"...`);
+    await addLabel({ client, repo, IDNumber, label: labelName });
   }
-  if (matches < requires && hasLabel) {
+  if (!shouldHaveLabel && hasLabel) {
     core.debug(
-      `${matches} < ${requires} matches, removing label "${label}"...`,
+      `Removing label "${labelID}"...`,
     );
-    await removeLabel({ client, repo, num, label: labelName });
+    await removeLabel({ client, repo, IDNumber, label: labelName });
   }
 };
 
@@ -78,32 +55,20 @@ export const applyIssueLabels = async ({
   labelIdToName: LabelIDToName;
   repo: Repo;
 }) => {
-  const { labels: curLabels, issueProps, num } = issueContext;
-  
-  if (skipLabelingLabelAssigned(curLabels, labelIdToName, skipLabeling)) {
-    return;
-  }
+  const { labels: curLabels, issueProps, IDNumber } = issueContext;
+  for (const [labelID, conditionsConfig] of Object.entries(config)) {
+    core.debug(`Label: ${labelID}`);
 
-  for (const [label, opts] of Object.entries(config)) {
-    core.debug(`Label: ${label}`);
-
-    const matches = forConditions<IssueCondition>(
-      opts.conditions,
-      (condition) => {
-        const handler = getIssueConditionHandler(condition);
-        return handler?.(condition as any, issueProps) || false;
-      },
-    );
+    const shouldHaveLabel = evaluator(ConditionSetType.issue, conditionsConfig, issueProps)
 
     await addRemoveLabel({
       client,
       curLabels,
-      label,
-      labelIdToName,
-      matches,
-      num,
+      labelID,
+      labelName: labelIdToName[labelID],
+      IDNumber,
       repo,
-      requires: opts.requires,
+      shouldHaveLabel,
     });
   }
 };
@@ -123,30 +88,20 @@ export const applyPRLabels = async ({
   prContext: PRContext;
   repo: Repo;
 }) => {
-  const { labels: curLabels, prProps, num } = prContext;
+  const { labels: curLabels, prProps, IDNumber } = prContext;
+  for (const [labelID, conditionsConfig] of Object.entries(config)) {
+    core.debug(`Label: ${labelID}`);
 
-  if (skipLabelingLabelAssigned(curLabels, labelIdToName, skipLabeling)) {
-    return;
-  }
-
-  for (const [label, opts] of Object.entries(config)) {
-    core.debug(`Label: ${label}`);
-
-    console.log(opts.conditions)
-    const matches = forConditions<PRCondition>(opts.conditions, (condition) => {
-      const handler = getPRConditionHandler(condition);
-      return handler?.(condition as any, prProps) || false;
-    });
+    const shouldHaveLabel = evaluator(ConditionSetType.issue, conditionsConfig, prProps)
 
     await addRemoveLabel({
       client,
       curLabels,
-      label,
-      labelIdToName,
-      matches,
-      num,
+      labelID,
+      labelName: labelIdToName[labelID],
+      IDNumber,
       repo,
-      requires: opts.requires,
+      shouldHaveLabel,
     });
   }
 };
