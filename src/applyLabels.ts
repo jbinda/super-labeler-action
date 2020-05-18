@@ -154,7 +154,7 @@ export const applyPRLabels = async ({
 }) => {
   const { labels: curLabels, prProps, IDNumber } = prContext;
 
-  if (skipLabeling !== undefined &&  skipLabelingLabelAssigned(curLabels, labelIdToName, skipLabeling)) {
+  if (skipLabeling !== undefined && skipLabelingLabelAssigned(curLabels, labelIdToName, skipLabeling)) {
     core.debug(`Labeling skipped due to existing skipLabeling label`);
     return;
   }
@@ -171,7 +171,7 @@ export const applyPRLabels = async ({
   core.debug(`Fallback labels : ${fallbackLabels.join(';')}`)
 
   let nonFallbackLabelsCount = getNonFallbackLabels(curLabels, fallbackLabelNames);
- core.debug(`Init Non Fallback labels count: ${nonFallbackLabelsCount}`)
+  core.debug(`Init Non Fallback labels count: ${nonFallbackLabelsCount}`)
 
   for (const [labelID, conditionsConfig] of Object.entries(config)) {
     core.debug(`Processing label with ID ${labelID}`);

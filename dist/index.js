@@ -9875,7 +9875,6 @@ class ActionSuperLabeler {
                 }
                 const config = JSON.parse(fs_1.default.readFileSync(configPath).toString());
                 core.debug(`Config: ${JSON.stringify(config)}`);
-                console.log(config);
                 let curContext;
                 if (context.payload.pull_request) {
                     const ctx = yield parseContext_1.parsePRContext(context, this.client, repo);
