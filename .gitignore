@@ -105,5 +105,7 @@ typings/
 web/dist/
 
 # local config file
-labels.local.json
-event*.json
+/labels.local.json
+/event*.json
+
+!examples/

@@ -3,7 +3,7 @@ import { GitHub } from '@actions/github';
 
 import { Config } from './types';
 import { createLabel, getLabels, Repo, updateLabel } from './api';
-import { formatColour } from './utils';
+import { formatColour, log } from './utils';
 
 const syncLabels = async ({
   client,
@@ -15,7 +15,7 @@ const syncLabels = async ({
   repo: Repo;
 }) => {
   const curLabels = await getLabels({ client, repo });
-  core.debug(`curLabels: ${JSON.stringify(curLabels)}`);
+  log(`Repo current labels`, curLabels);
 
   for (const _configLabel of Object.values(config)) {
     const configLabel = {
@@ -30,24 +30,22 @@ const syncLabels = async ({
         label.description !== configLabel.description ||
         label.color !== formatColour(configLabel.color)
       ) {
-        core.debug(
-          `Recreate ${JSON.stringify(configLabel)} (prev: ${JSON.stringify(
-            label,
-          )})`,
-        );
+        log({title: `Recreate label`, type: 'action'}, {newLabelData: configLabel, prevLabelData: label})
         try {
           await updateLabel({ client, repo, label: configLabel });
         }
         catch(e) {
+          log({title:'Label update error', type: 'error'}, e.message )
           core.error(`Label update error: ${e.message}`)
         }
       }
     } else {
-      core.debug(`Create ${JSON.stringify(configLabel)}`);
+      log({title: `Create label`, type: 'action'}, configLabel)
       try {
         await createLabel({ client, repo, label: configLabel });
       }
       catch (e) {
+        log({title:'Label create error', type: 'error'}, e.message )
         core.error(`Label create error: ${e.message}`)
       }
     }

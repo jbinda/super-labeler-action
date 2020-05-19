@@ -1,9 +1,9 @@
-import * as core from '@actions/core';
 import { GitHub } from '@actions/github';
 
 import { Config, Fallback } from './types';
 import { addLabel, removeLabel, Repo } from './api';
 import evaluator, { ConditionSetType } from './conditions/evaluator';
+import { checkDryRun, log } from './utils';
 
 import { IssueContext, PRContext, Labels } from './parseContext';
 
@@ -49,14 +49,24 @@ const addRemoveLabel = async ({
   shouldHaveLabel: boolean;
 }) => {
   const hasLabel = curLabels.filter((l) => l.name === labelName).length > 0;
-  if (shouldHaveLabel && !hasLabel) {
-    core.debug(`Adding label "${labelID}"...`);
-    await addLabel({ client, repo, IDNumber, label: labelName });
+  if (shouldHaveLabel && !hasLabel) {  
+    await checkDryRun( 
+      async () => {
+        log({title: `Adding label ID`, type: 'action'}, labelID)
+        await addLabel({ client, repo, IDNumber, label: labelName })
+      }, 
+      () => log({title:'Skipped due dryRun flag enabled', type: 'warn'},`Adding label "${labelID}"`)
+    );
     return 1;
   }
   if (!shouldHaveLabel && hasLabel) {
-    core.debug(`Removing label "${labelID}"...`);
-    await removeLabel({ client, repo, IDNumber, label: labelName });
+    await checkDryRun( 
+      async () => {
+        log({title: `Removing label ID`, type: 'action'}, labelID)
+        await removeLabel({ client, repo, IDNumber, label: labelName })
+      }, 
+      () => log({title:'Skipped due dryRun flag enabled', type: 'warn'},`Removing label "${labelID}"`)
+    );
     return -1;
   }
   return 0;
@@ -82,7 +92,7 @@ export const applyIssueLabels = async ({
   const { labels: curLabels, issueProps, IDNumber } = issueContext;
 
   if (skipLabeling !== undefined && skipLabelingLabelAssigned(curLabels, labelIdToName, skipLabeling)) {
-    core.debug(`Labeling skipped due to existing skipLabeling label`);
+    log({title: 'Skipped', type: 'warn'}, `Labeling skipped due to existing skipLabeling label`);
     return;
   }
 
@@ -95,12 +105,12 @@ export const applyIssueLabels = async ({
 
   const fallbackLabels = configFallback ? getFallbackLabels(configFallback) : []
   const fallbackLabelNames = fallbackLabels.map((labelID) => labelIdToName[labelID])
-  core.debug(`Fallback labels : ${fallbackLabels.join(';')}`)
+  log(`Fallback labels`, fallbackLabels)
   let nonFallbackLabelsCount = getNonFallbackLabels(curLabels, fallbackLabelNames);
-  core.debug(`Init Non Fallback labels count: ${nonFallbackLabelsCount}`)
+  log(`Init Non Fallback labels count`, nonFallbackLabelsCount)
 
   for (const [labelID, conditionsConfig] of Object.entries(config)) {
-    core.debug(`Processing label with ID ${labelID}`);
+    log(`Processing label ID`, labelID);
 
     const shouldHaveLabel = evaluator(
       ConditionSetType.issue,
@@ -122,16 +132,18 @@ export const applyIssueLabels = async ({
   const shouldAddFallbackLabels =
     nonFallbackLabelsCount <= fallbackActivationValue;
   
-    core.debug(`Fallback activation value: ${fallbackActivationValue}, Non fallback labels: ${nonFallbackLabelsCount}, should add fallback ${shouldAddFallbackLabels}`)
+  log(`Fallback activation value`, fallbackActivationValue)
+  log(`Non fallback labels`, nonFallbackLabelsCount)
+  log(`should add fallback`, shouldAddFallbackLabels)
 
   fallbackLabels.forEach(async (labelID) => {
-    core.debug(`Adding fallback label: '${labelID}'`);
+    log(`Adding fallback label ID`, labelID);
     await addRemoveLabel({
       ...commonProps,
       labelID,
       labelName: labelIdToName[labelID],
       shouldHaveLabel: shouldAddFallbackLabels,
-    });
+    })
   });
 };
 
@@ -155,7 +167,7 @@ export const applyPRLabels = async ({
   const { labels: curLabels, prProps, IDNumber } = prContext;
 
   if (skipLabeling !== undefined && skipLabelingLabelAssigned(curLabels, labelIdToName, skipLabeling)) {
-    core.debug(`Labeling skipped due to existing skipLabeling label`);
+    log({title: 'Skipped', type: 'warn'}, `Labeling skipped due to existing skipLabeling label`);
     return;
   }
 
@@ -168,13 +180,13 @@ export const applyPRLabels = async ({
 
   const fallbackLabels = configFallback ? getFallbackLabels(configFallback) : [];
   const fallbackLabelNames = fallbackLabels.map((labelID) => labelIdToName[labelID])
-  core.debug(`Fallback labels : ${fallbackLabels.join(';')}`)
+  log(`Fallback labels`, fallbackLabels)
 
   let nonFallbackLabelsCount = getNonFallbackLabels(curLabels, fallbackLabelNames);
-  core.debug(`Init Non Fallback labels count: ${nonFallbackLabelsCount}`)
+  log(`Init Non Fallback labels count`, nonFallbackLabelsCount)
 
   for (const [labelID, conditionsConfig] of Object.entries(config)) {
-    core.debug(`Processing label with ID ${labelID}`);
+    log(`Processing label ID`, labelID);
 
     const shouldHaveLabel = evaluator(
       ConditionSetType.pr,
@@ -195,16 +207,18 @@ export const applyPRLabels = async ({
     const shouldAddFallbackLabels =
       nonFallbackLabelsCount <= fallbackActivationValue;
 
-    core.debug(`Fallback activation value: ${fallbackActivationValue}, Non fallback labels: ${nonFallbackLabelsCount}, should add fallback ${shouldAddFallbackLabels}`)
-    
+    log(`Fallback activation value`, fallbackActivationValue)
+    log(`Non fallback labels`, nonFallbackLabelsCount)
+    log(`Should add fallback`, shouldAddFallbackLabels)
+
     fallbackLabels.forEach(async (labelID) => {
-      core.debug(`Adding fallback label: '${labelID}'`);
+      log(`Adding fallback label ID`, labelID);
       await addRemoveLabel({
         ...commonProps,
         labelID,
         labelName: labelIdToName[labelID],
         shouldHaveLabel: shouldAddFallbackLabels,
-      });
+      })
     });
   }
 };

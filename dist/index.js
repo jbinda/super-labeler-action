@@ -2747,11 +2747,23 @@ function paginatePlugin(octokit) {
 /***/ }),
 
 /***/ 163:
-/***/ (function(__unusedmodule, exports) {
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
 
 "use strict";
 
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+const core = __importStar(__webpack_require__(470));
+const colorette_1 = __webpack_require__(248);
+const { SHOW_LOGS: ENV_SHOW_LOGS, GH_ACTION_LOCAL_TEST } = process.env;
+const DRY_RUN = !!GH_ACTION_LOCAL_TEST;
+const SHOW_LOGS = ENV_SHOW_LOGS === 'true';
 exports.formatColour = (colour) => {
     if (colour[0] === '#') {
         return colour.substr(1);
@@ -2764,6 +2776,35 @@ exports.processRegExpPattern = (pattern) => {
     const matchDelimiters = pattern.match(/^\/(.*)\/(.*)$/);
     const [, source, flags] = matchDelimiters || [];
     return new RegExp(source || pattern, flags);
+};
+exports.normalize = (text) => (text || '').toUpperCase();
+exports.checkDryRun = (action, dryRunAction) => DRY_RUN ? dryRunAction() : action();
+exports.log = (header, object = {}) => {
+    let title = '';
+    let type;
+    if (typeof header === `string`) {
+        title = header;
+    }
+    if (typeof header === 'object') {
+        title = header.title;
+        type = header.type;
+    }
+    if (SHOW_LOGS) {
+        const getTypeTile = (type) => {
+            if (type === 'error')
+                return colorette_1.red('::error::');
+            if (type === 'warn')
+                return colorette_1.yellow('::warn::');
+            if (type === 'action')
+                return colorette_1.green('::action::');
+            return colorette_1.blue(`::logging::`);
+        };
+        // eslint-disable-next-line
+        console.log(colorette_1.bold(getTypeTile(type)), colorette_1.italic(colorette_1.gray(`${title}: `)), object);
+    }
+    else {
+        core.debug(`${title}: ${JSON.stringify(object)}`);
+    }
 };
 
 
@@ -2999,6 +3040,90 @@ exports.getIssueConditionHandler = (condition) => {
     const handler = handlers.find((handler) => handler[0] === condition.type);
     return (_a = handler) === null || _a === void 0 ? void 0 : _a[1];
 };
+
+
+/***/ }),
+
+/***/ 248:
+/***/ (function(module) {
+
+"use strict";
+
+
+let enabled =
+  !("NO_COLOR" in process.env) &&
+  ("FORCE_COLOR" in process.env ||
+    process.platform === "win32" ||
+    (process.stdout != null &&
+      process.stdout.isTTY &&
+      process.env.TERM &&
+      process.env.TERM !== "dumb"))
+
+const raw = (open, close, searchRegex, replaceValue) => (s) =>
+  enabled
+    ? open +
+      (~(s += "").indexOf(close, 4) // skip opening \x1b[
+        ? s.replace(searchRegex, replaceValue)
+        : s) +
+      close
+    : s
+
+const init = (open, close) => {
+  return raw(
+    `\x1b[${open}m`,
+    `\x1b[${close}m`,
+    new RegExp(`\\x1b\\[${close}m`, "g"),
+    `\x1b[${open}m`
+  )
+}
+
+module.exports = {
+  options: Object.defineProperty({}, "enabled", {
+    get: () => enabled,
+    set: (value) => (enabled = value),
+  }),
+  reset: init(0, 0),
+  bold: raw("\x1b[1m", "\x1b[22m", /\x1b\[22m/g, "\x1b[22m\x1b[1m"),
+  dim: raw("\x1b[2m", "\x1b[22m", /\x1b\[22m/g, "\x1b[22m\x1b[2m"),
+  italic: init(3, 23),
+  underline: init(4, 24),
+  inverse: init(7, 27),
+  hidden: init(8, 28),
+  strikethrough: init(9, 29),
+  black: init(30, 39),
+  red: init(31, 39),
+  green: init(32, 39),
+  yellow: init(33, 39),
+  blue: init(34, 39),
+  magenta: init(35, 39),
+  cyan: init(36, 39),
+  white: init(37, 39),
+  gray: init(90, 39),
+  bgBlack: init(40, 49),
+  bgRed: init(41, 49),
+  bgGreen: init(42, 49),
+  bgYellow: init(43, 49),
+  bgBlue: init(44, 49),
+  bgMagenta: init(45, 49),
+  bgCyan: init(46, 49),
+  bgWhite: init(47, 49),
+  blackBright: init(90, 39),
+  redBright: init(91, 39),
+  greenBright: init(92, 39),
+  yellowBright: init(93, 39),
+  blueBright: init(94, 39),
+  magentaBright: init(95, 39),
+  cyanBright: init(96, 39),
+  whiteBright: init(97, 39),
+  bgBlackBright: init(100, 49),
+  bgRedBright: init(101, 49),
+  bgGreenBright: init(102, 49),
+  bgYellowBright: init(103, 49),
+  bgBlueBright: init(104, 49),
+  bgMagentaBright: init(105, 49),
+  bgCyanBright: init(106, 49),
+  bgWhiteBright: init(107, 49),
+}
 
 
 /***/ }),
@@ -5428,18 +5553,14 @@ const github = __webpack_require__(469);
 const core = __webpack_require__(470);
 const path = __webpack_require__(622);
 const superLabeler = __webpack_require__(583);
-const LOCAL_LABELS_FILE = 'labels.local.json';
 const { USE_LOCAL_CONFIG, GITHUB_WORKSPACE = '' } = process.env;
-const useLocalConfig = USE_LOCAL_CONFIG === 'true';
-const showLogs = core.getInput('showLogs');
-const configFile = useLocalConfig ? LOCAL_LABELS_FILE : core.getInput('config');
+const configFile = core.getInput('config');
 const configPath = path.join(GITHUB_WORKSPACE, configFile);
 const GITHUB_TOKEN = core.getInput('GITHUB_TOKEN', {
     required: true,
 });
 const options = {
-    configPath,
-    showLogs: showLogs === 'true',
+    configPath
 };
 const action = new superLabeler(new github.GitHub(GITHUB_TOKEN), options);
 action.run();
@@ -8816,7 +8937,7 @@ const api_1 = __webpack_require__(924);
 const utils_1 = __webpack_require__(163);
 const syncLabels = ({ client, config, repo, }) => __awaiter(void 0, void 0, void 0, function* () {
     const curLabels = yield api_1.getLabels({ client, repo });
-    core.debug(`curLabels: ${JSON.stringify(curLabels)}`);
+    utils_1.log(`Repo current labels`, curLabels);
     for (const _configLabel of Object.values(config)) {
         const configLabel = Object.assign(Object.assign({}, _configLabel), { color: _configLabel.colour });
         const curLabel = curLabels.filter((l) => l.name === configLabel.name);
@@ -8824,21 +8945,23 @@ const syncLabels = ({ client, config, repo, }) => __awaiter(void 0, void 0, void
             const label = curLabel[0];
             if (label.description !== configLabel.description ||
                 label.color !== utils_1.formatColour(configLabel.color)) {
-                core.debug(`Recreate ${JSON.stringify(configLabel)} (prev: ${JSON.stringify(label)})`);
+                utils_1.log({ title: `Recreate label`, type: 'action' }, { newLabelData: configLabel, prevLabelData: label });
                 try {
                     yield api_1.updateLabel({ client, repo, label: configLabel });
                 }
                 catch (e) {
+                    utils_1.log({ title: 'Label update error', type: 'error' }, e.message);
                     core.error(`Label update error: ${e.message}`);
                 }
             }
         }
         else {
-            core.debug(`Create ${JSON.stringify(configLabel)}`);
+            utils_1.log({ title: `Create label`, type: 'action' }, configLabel);
             try {
                 yield api_1.createLabel({ client, repo, label: configLabel });
             }
             catch (e) {
+                utils_1.log({ title: 'Label create error', type: 'error' }, e.message);
                 core.error(`Label create error: ${e.message}`);
             }
         }
@@ -9564,15 +9687,8 @@ function getNextPage (octokit, link, headers) {
 
 "use strict";
 
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
-    result["default"] = mod;
-    return result;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const core = __importStar(__webpack_require__(470));
+const utils_1 = __webpack_require__(163);
 const index_1 = __webpack_require__(428);
 var ConditionSetType;
 (function (ConditionSetType) {
@@ -9582,12 +9698,12 @@ var ConditionSetType;
 const forConditions = (conditions, callback) => {
     let matches = 0;
     for (const condition of conditions) {
-        core.debug(`Condition: ${JSON.stringify(condition)}`);
+        utils_1.log(`Condition`, condition);
         if (callback(condition)) {
             matches++;
         }
     }
-    core.debug(`Matches: ${matches}`);
+    utils_1.log(`Matches`, matches);
     return matches;
 };
 function evaluator(conditionSetType, config, props) {
@@ -9849,6 +9965,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(__webpack_require__(747));
 const core = __importStar(__webpack_require__(470));
 const github = __importStar(__webpack_require__(469));
+const utils_1 = __webpack_require__(163);
 const applyLabels_1 = __webpack_require__(919);
 const parseContext_1 = __webpack_require__(380);
 const syncLabels_1 = __importDefault(__webpack_require__(491));
@@ -9874,14 +9991,14 @@ class ActionSuperLabeler {
                     throw new Error(`config not found at "${configPath}"`);
                 }
                 const config = JSON.parse(fs_1.default.readFileSync(configPath).toString());
-                core.debug(`Config: ${JSON.stringify(config)}`);
+                utils_1.log(`Config`, config);
                 let curContext;
                 if (context.payload.pull_request) {
                     const ctx = yield parseContext_1.parsePRContext(context, this.client, repo);
                     if (!ctx) {
                         throw new Error('pull request not found on context');
                     }
-                    core.debug(`PR context: ${JSON.stringify(ctx)}`);
+                    utils_1.log(`PR context`, ctx);
                     curContext = {
                         type: 'pr',
                         context: ctx,
@@ -9892,17 +10009,20 @@ class ActionSuperLabeler {
                     if (!ctx) {
                         throw new Error('issue not found on context');
                     }
-                    core.debug(`issue context: ${JSON.stringify(ctx)}`);
+                    utils_1.log(`issue context`, ctx);
                     curContext = {
                         type: 'issue',
                         context: ctx,
                     };
                 }
                 else {
+                    utils_1.log({ title: 'Exit due no context provided', type: 'warn' }, `Run "yarn dev:pr" or "yarn dev:issue" to pass proper context from local *.json`);
                     return;
                 }
-                if (!dryRun)
+                yield utils_1.checkDryRun(() => __awaiter(this, void 0, void 0, function* () {
+                    utils_1.log({ title: 'Sync labels', type: 'action' }, "Syncing labels...");
                     yield syncLabels_1.default({ client: this.client, repo, config: config.labels });
+                }), () => utils_1.log({ title: 'Skipped due to dryRun flag enabled', type: 'warn' }, "Sync labels"));
                 // Mapping of label ids to Github names
                 const labelIdToName = Object.entries(config.labels).reduce((acc, cur) => {
                     acc[cur[0]] = cur[1].name;
@@ -9930,7 +10050,7 @@ class ActionSuperLabeler {
                 }
             }
             catch (err) {
-                core.error(err.message);
+                utils_1.log({ title: 'Error occurs', type: 'error' }, err.message);
                 core.setFailed(err.message);
             }
         });
@@ -26550,9 +26670,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const core = __importStar(__webpack_require__(470));
 const api_1 = __webpack_require__(924);
 const evaluator_1 = __importStar(__webpack_require__(551));
+const utils_1 = __webpack_require__(163);
 const skipLabelingLabelAssigned = (curLabels, labelIdToName, skipLabeling) => Object.values(curLabels)
     .map(({ name }) => name)
     .some((existingLabel) => existingLabel === labelIdToName[skipLabeling]);
@@ -26563,13 +26683,17 @@ const getFallbackActivationValue = (configFallback) => Array.isArray(configFallb
 const addRemoveLabel = ({ client, curLabels, labelID, labelName, IDNumber, repo, shouldHaveLabel, }) => __awaiter(void 0, void 0, void 0, function* () {
     const hasLabel = curLabels.filter((l) => l.name === labelName).length > 0;
     if (shouldHaveLabel && !hasLabel) {
-        core.debug(`Adding label "${labelID}"...`);
-        yield api_1.addLabel({ client, repo, IDNumber, label: labelName });
+        yield utils_1.checkDryRun(() => __awaiter(void 0, void 0, void 0, function* () {
+            utils_1.log({ title: `Adding label ID`, type: 'action' }, labelID);
+            yield api_1.addLabel({ client, repo, IDNumber, label: labelName });
+        }), () => utils_1.log({ title: 'Skipped due dryRun flag enabled', type: 'warn' }, `Adding label "${labelID}"`));
         return 1;
     }
     if (!shouldHaveLabel && hasLabel) {
-        core.debug(`Removing label "${labelID}"...`);
-        yield api_1.removeLabel({ client, repo, IDNumber, label: labelName });
+        yield utils_1.checkDryRun(() => __awaiter(void 0, void 0, void 0, function* () {
+            utils_1.log({ title: `Removing label ID`, type: 'action' }, labelID);
+            yield api_1.removeLabel({ client, repo, IDNumber, label: labelName });
+        }), () => utils_1.log({ title: 'Skipped due dryRun flag enabled', type: 'warn' }, `Removing label "${labelID}"`));
         return -1;
     }
     return 0;
@@ -26577,7 +26701,7 @@ const addRemoveLabel = ({ client, curLabels, labelID, labelName, IDNumber, repo,
 exports.applyIssueLabels = ({ client, config, skipLabeling, configFallback, issueContext, labelIdToName, repo, }) => __awaiter(void 0, void 0, void 0, function* () {
     const { labels: curLabels, issueProps, IDNumber } = issueContext;
     if (skipLabeling !== undefined && skipLabelingLabelAssigned(curLabels, labelIdToName, skipLabeling)) {
-        core.debug(`Labeling skipped due to existing skipLabeling label`);
+        utils_1.log({ title: 'Skipped', type: 'warn' }, `Labeling skipped due to existing skipLabeling label`);
         return;
     }
     const commonProps = {
@@ -26588,27 +26712,29 @@ exports.applyIssueLabels = ({ client, config, skipLabeling, configFallback, issu
     };
     const fallbackLabels = configFallback ? getFallbackLabels(configFallback) : [];
     const fallbackLabelNames = fallbackLabels.map((labelID) => labelIdToName[labelID]);
-    core.debug(`Fallback labels : ${fallbackLabels.join(';')}`);
+    utils_1.log(`Fallback labels`, fallbackLabels);
     let nonFallbackLabelsCount = getNonFallbackLabels(curLabels, fallbackLabelNames);
-    core.debug(`Init Non Fallback labels count: ${nonFallbackLabelsCount}`);
+    utils_1.log(`Init Non Fallback labels count`, nonFallbackLabelsCount);
     for (const [labelID, conditionsConfig] of Object.entries(config)) {
-        core.debug(`Processing label with ID ${labelID}`);
+        utils_1.log(`Processing label ID`, labelID);
         const shouldHaveLabel = evaluator_1.default(evaluator_1.ConditionSetType.issue, conditionsConfig, issueProps);
         const labelsManageResult = yield addRemoveLabel(Object.assign(Object.assign({}, commonProps), { labelID, labelName: labelIdToName[labelID], shouldHaveLabel }));
         nonFallbackLabelsCount += labelsManageResult;
     }
     const fallbackActivationValue = configFallback ? getFallbackActivationValue(configFallback) : -1;
     const shouldAddFallbackLabels = nonFallbackLabelsCount <= fallbackActivationValue;
-    core.debug(`Fallback activation value: ${fallbackActivationValue}, Non fallback labels: ${nonFallbackLabelsCount}, should add fallback ${shouldAddFallbackLabels}`);
+    utils_1.log(`Fallback activation value`, fallbackActivationValue);
+    utils_1.log(`Non fallback labels`, nonFallbackLabelsCount);
+    utils_1.log(`should add fallback`, shouldAddFallbackLabels);
     fallbackLabels.forEach((labelID) => __awaiter(void 0, void 0, void 0, function* () {
-        core.debug(`Adding fallback label: '${labelID}'`);
+        utils_1.log(`Adding fallback label ID`, labelID);
         yield addRemoveLabel(Object.assign(Object.assign({}, commonProps), { labelID, labelName: labelIdToName[labelID], shouldHaveLabel: shouldAddFallbackLabels }));
     }));
 });
 exports.applyPRLabels = ({ client, config, configFallback, labelIdToName, skipLabeling, prContext, repo, }) => __awaiter(void 0, void 0, void 0, function* () {
     const { labels: curLabels, prProps, IDNumber } = prContext;
     if (skipLabeling !== undefined && skipLabelingLabelAssigned(curLabels, labelIdToName, skipLabeling)) {
-        core.debug(`Labeling skipped due to existing skipLabeling label`);
+        utils_1.log({ title: 'Skipped', type: 'warn' }, `Labeling skipped due to existing skipLabeling label`);
         return;
     }
     const commonProps = {
@@ -26619,19 +26745,21 @@ exports.applyPRLabels = ({ client, config, configFallback, labelIdToName, skipLa
     };
     const fallbackLabels = configFallback ? getFallbackLabels(configFallback) : [];
     const fallbackLabelNames = fallbackLabels.map((labelID) => labelIdToName[labelID]);
-    core.debug(`Fallback labels : ${fallbackLabels.join(';')}`);
+    utils_1.log(`Fallback labels`, fallbackLabels);
     let nonFallbackLabelsCount = getNonFallbackLabels(curLabels, fallbackLabelNames);
-    core.debug(`Init Non Fallback labels count: ${nonFallbackLabelsCount}`);
+    utils_1.log(`Init Non Fallback labels count`, nonFallbackLabelsCount);
     for (const [labelID, conditionsConfig] of Object.entries(config)) {
-        core.debug(`Processing label with ID ${labelID}`);
+        utils_1.log(`Processing label ID`, labelID);
         const shouldHaveLabel = evaluator_1.default(evaluator_1.ConditionSetType.pr, conditionsConfig, prProps);
         const labelsManageResult = yield addRemoveLabel(Object.assign(Object.assign({}, commonProps), { labelID, labelName: labelIdToName[labelID], shouldHaveLabel }));
         nonFallbackLabelsCount += labelsManageResult;
         const fallbackActivationValue = configFallback ? getFallbackActivationValue(configFallback) : -1;
         const shouldAddFallbackLabels = nonFallbackLabelsCount <= fallbackActivationValue;
-        core.debug(`Fallback activation value: ${fallbackActivationValue}, Non fallback labels: ${nonFallbackLabelsCount}, should add fallback ${shouldAddFallbackLabels}`);
+        utils_1.log(`Fallback activation value`, fallbackActivationValue);
+        utils_1.log(`Non fallback labels`, nonFallbackLabelsCount);
+        utils_1.log(`Should add fallback`, shouldAddFallbackLabels);
         fallbackLabels.forEach((labelID) => __awaiter(void 0, void 0, void 0, function* () {
-            core.debug(`Adding fallback label: '${labelID}'`);
+            utils_1.log(`Adding fallback label ID`, labelID);
             yield addRemoveLabel(Object.assign(Object.assign({}, commonProps), { labelID, labelName: labelIdToName[labelID], shouldHaveLabel: shouldAddFallbackLabels }));
         }));
     }

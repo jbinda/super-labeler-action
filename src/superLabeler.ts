@@ -4,6 +4,7 @@ import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { GitHub } from '@actions/github';
 
+import { checkDryRun, log } from './utils';
 import { applyIssueLabels, applyPRLabels } from './applyLabels';
 import { Config, Options } from './types';
 import {
@@ -43,7 +44,7 @@ async run () {
       throw new Error(`config not found at "${configPath}"`);
     }
     const config: Config = JSON.parse(fs.readFileSync(configPath).toString());
-    core.debug(`Config: ${JSON.stringify(config)}`);
+    log(`Config`, config);
 
     let curContext:
       | { type: 'pr'; context: PRContext }
@@ -53,7 +54,7 @@ async run () {
       if (!ctx) {
         throw new Error('pull request not found on context');
       }
-      core.debug(`PR context: ${JSON.stringify(ctx)}`);
+      log(`PR context`, ctx);
 
       curContext = {
         type: 'pr',
@@ -64,17 +65,24 @@ async run () {
       if (!ctx) {
         throw new Error('issue not found on context');
       }
-      core.debug(`issue context: ${JSON.stringify(ctx)}`);
+      log(`issue context`, ctx );
 
       curContext = {
         type: 'issue',
         context: ctx,
       };
     } else {
+      log({title:'Exit due no context provided', type: 'warn'}, `Run "yarn dev:pr" or "yarn dev:issue" to pass proper context from local *.json`)
       return;
     }
 
-    if (!dryRun) await syncLabels({ client: this.client, repo, config: config.labels });
+    await checkDryRun( 
+      async () => {
+        log({title:'Sync labels', type: 'action'},"Syncing labels...")
+        await syncLabels({ client: this.client, repo, config: config.labels })
+      }, 
+      () => log({title:'Skipped due to dryRun flag enabled', type: 'warn'},"Sync labels")
+    );
 
     // Mapping of label ids to Github names
     const labelIdToName = Object.entries(config.labels).reduce(
@@ -105,7 +113,7 @@ async run () {
       });
     }
   } catch (err) {
-    core.error(err.message);
+    log({title: 'Error occurs', type: 'error'}, err.message);
     core.setFailed(err.message);
   }
 }};

@@ -1,5 +1,4 @@
-import * as core from '@actions/core';
-
+import { log } from '../utils';
 import { IssueConditionConfig, PRConditionConfig } from '../types';
 import {
   IssueCondition,
@@ -21,12 +20,12 @@ const forConditions = <T extends IssueCondition | PRCondition>(
 ) => {
   let matches = 0;
   for (const condition of conditions) {
-    core.debug(`Condition: ${JSON.stringify(condition)}`);
+    log(`Condition`, condition);
     if (callback(condition)) {
       matches++;
     }
   }
-  core.debug(`Matches: ${matches}`);
+  log(`Matches`, matches);
   return matches;
 };
 

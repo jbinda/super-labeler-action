@@ -9,9 +9,6 @@ inputs:
     description: 'Config file path'
     default: '.github/labels.json'
     required: false
-  showLogs:
-    description: Show logs with info like total number of issues found, stale issues, closed etc.
-    required: false
 runs:
   using: 'node12'
   main: 'dist/index.js'

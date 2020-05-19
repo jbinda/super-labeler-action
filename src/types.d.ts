@@ -37,3 +37,8 @@ export interface Options {
   configPath: string;
   showLogs: boolean;
 }
+
+export type LogSetting = {
+  title: string;
+  type?: 'error' | 'warn' | 'info' | 'action';
+};
