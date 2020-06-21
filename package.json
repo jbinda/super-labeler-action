@@ -10,7 +10,7 @@
     "node": "12"
   },
   "scripts": {
-    "build": "ncc build src/index.ts -o dist",
+    "build": "ncc build src/actionMain.ts -o dist",
     "format": "prettier --write src/**/*.ts",
     "dev:pr": "EVENT_PATH=event.pr.json yarn dev:run",
     "dev:issue": "EVENT_PATH=event.issue.json yarn dev:run",

@@ -116,6 +116,12 @@ async run () {
     log({title: 'Error occurs', type: 'error'}, err.message);
     core.setFailed(err.message);
   }
-}};
+}
+
+async labelIssue ( issueToLabel: any ) {
+  console.log(issueToLabel)
+  return ['Bug', 'Feature']
+}
+};
 
 module.exports = ActionSuperLabeler;

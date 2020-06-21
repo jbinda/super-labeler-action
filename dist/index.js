@@ -34,7 +34,7 @@ module.exports =
 /******/ 	// the startup function
 /******/ 	function startup() {
 /******/ 		// Load entry module and return exports
-/******/ 		return __webpack_require__(325);
+/******/ 		return __webpack_require__(962);
 /******/ 	};
 /******/
 /******/ 	// run startup
@@ -5545,25 +5545,28 @@ isStream.transform = function (stream) {
 /***/ }),
 
 /***/ 325:
-/***/ (function(__unusedmodule, __unusedexports, __webpack_require__) {
+/***/ (function(module, __unusedexports, __webpack_require__) {
 
 "use strict";
 
-const github = __webpack_require__(469);
-const core = __webpack_require__(470);
-const path = __webpack_require__(622);
-const superLabeler = __webpack_require__(583);
-const { USE_LOCAL_CONFIG, GITHUB_WORKSPACE = '' } = process.env;
-const configFile = core.getInput('config');
-const configPath = path.join(GITHUB_WORKSPACE, configFile);
-const GITHUB_TOKEN = core.getInput('GITHUB_TOKEN', {
-    required: true,
-});
-const options = {
-    configPath
+const init = () => {
+    // MARK: - External dependencies
+    const github = __webpack_require__(469);
+    const core = __webpack_require__(470);
+    const path = __webpack_require__(622);
+    const superLabeler = __webpack_require__(583);
+    const { GITHUB_WORKSPACE = '' } = process.env;
+    const configFile = core.getInput('config');
+    const configPath = path.join(GITHUB_WORKSPACE, configFile);
+    const GITHUB_TOKEN = core.getInput('GITHUB_TOKEN', {
+        required: true,
+    });
+    const options = {
+        configPath
+    };
+    return new superLabeler(new github.GitHub(GITHUB_TOKEN), options);
 };
-const action = new superLabeler(new github.GitHub(GITHUB_TOKEN), options);
-action.run();
+module.exports = init();
 
 
 /***/ }),
@@ -10053,6 +10056,12 @@ class ActionSuperLabeler {
                 utils_1.log({ title: 'Error occurs', type: 'error' }, err.message);
                 core.setFailed(err.message);
             }
+        });
+    }
+    labelIssue(issueToLabel) {
+        return __awaiter(this, void 0, void 0, function* () {
+            console.log(issueToLabel);
+            return ['Bug', 'Feature'];
         });
     }
 }
@@ -27309,6 +27318,17 @@ module.exports.sync = (cmd, args, opts) => {
 };
 
 module.exports.shellSync = (cmd, opts) => handleShell(module.exports.sync, cmd, opts);
+
+
+/***/ }),
+
+/***/ 962:
+/***/ (function(__unusedmodule, __unusedexports, __webpack_require__) {
+
+"use strict";
+
+const SuperLabeler = __webpack_require__(325);
+SuperLabeler.run();
 
 
 /***/ }),
