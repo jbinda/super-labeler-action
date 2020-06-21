@@ -1,3 +1,3 @@
 import SuperLabeler from './index'
 
-SuperLabeler.run();
+SuperLabeler.labelIssue({name: 'fsfsf',labels: [{name: 'enhancement'}, {name: 'iOS'}]});

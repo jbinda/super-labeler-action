@@ -126,12 +126,11 @@ class ActionSuperLabeler {
     const labels = await getLabels({client: this.client, repo})
 
     const issueLabels = issueToLabel.labels
-
     const attachLabels = issueLabels.reduce((result: any,currLabel: any)=> {
       const name = currLabel.name
       const matches = labels.reduce((matches:any, currRepoLabel: any) => {
         
-        const isMatch = currRepoLabel === name
+        const isMatch = currRepoLabel.name === name
         const mappedName = name
         return isMatch ? [...matches, mappedName] : matches
       },[])
@@ -139,6 +138,7 @@ class ActionSuperLabeler {
       return [...result,...matches]
     },[])
 
+    console.log(attachLabels)
     return attachLabels
   }
 };

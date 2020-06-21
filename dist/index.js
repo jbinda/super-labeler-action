@@ -10079,12 +10079,13 @@ class ActionSuperLabeler {
             const attachLabels = issueLabels.reduce((result, currLabel) => {
                 const name = currLabel.name;
                 const matches = labels.reduce((matches, currRepoLabel) => {
-                    const isMatch = currRepoLabel === name;
+                    const isMatch = currRepoLabel.name === name;
                     const mappedName = name;
                     return isMatch ? [...matches, mappedName] : matches;
                 }, []);
                 return [...result, ...matches];
             }, []);
+            console.log(attachLabels);
             return attachLabels;
         });
     }
@@ -27356,7 +27357,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const index_1 = __importDefault(__webpack_require__(325));
-index_1.default.run();
+index_1.default.labelIssue({ name: 'fsfsf', labels: [{ name: 'enhancement' }, { name: 'iOS' }] });
 
 
 /***/ }),
