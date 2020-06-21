@@ -5545,28 +5545,39 @@ isStream.transform = function (stream) {
 /***/ }),
 
 /***/ 325:
-/***/ (function(module, __unusedexports, __webpack_require__) {
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
 
 "use strict";
 
+// MARK: - External dependencies
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const core = __importStar(__webpack_require__(470));
+const github = __importStar(__webpack_require__(469));
+const path_1 = __importDefault(__webpack_require__(622));
+const superLabeler_1 = __importDefault(__webpack_require__(583));
 const init = () => {
-    // MARK: - External dependencies
-    const github = __webpack_require__(469);
-    const core = __webpack_require__(470);
-    const path = __webpack_require__(622);
-    const superLabeler = __webpack_require__(583);
     const { GITHUB_WORKSPACE = '' } = process.env;
     const configFile = core.getInput('config');
-    const configPath = path.join(GITHUB_WORKSPACE, configFile);
+    const configPath = path_1.default.join(GITHUB_WORKSPACE, configFile);
     const GITHUB_TOKEN = core.getInput('GITHUB_TOKEN', {
         required: true,
     });
     const options = {
         configPath
     };
-    return new superLabeler(new github.GitHub(GITHUB_TOKEN), options);
+    return new superLabeler_1.default(new github.GitHub(GITHUB_TOKEN), options);
 };
-module.exports = init();
+exports.default = init();
 
 
 /***/ }),
@@ -9941,7 +9952,7 @@ function getPageLinks (link) {
 /***/ }),
 
 /***/ 583:
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
 
 "use strict";
 
@@ -9971,6 +9982,7 @@ const github = __importStar(__webpack_require__(469));
 const utils_1 = __webpack_require__(163);
 const applyLabels_1 = __webpack_require__(919);
 const parseContext_1 = __webpack_require__(380);
+const getLabels_1 = __webpack_require__(933);
 const syncLabels_1 = __importDefault(__webpack_require__(491));
 const context = github.context;
 const dryRun = !!process.env.GH_ACTION_LOCAL_TEST;
@@ -10061,12 +10073,14 @@ class ActionSuperLabeler {
     labelIssue(issueToLabel) {
         return __awaiter(this, void 0, void 0, function* () {
             console.log(issueToLabel);
-            return ['Bug', 'Feature'];
+            const repo = context.repo;
+            const labels = yield getLabels_1.getLabels({ client: this.client, repo });
+            return labels;
         });
     }
 }
 ;
-module.exports = ActionSuperLabeler;
+exports.default = ActionSuperLabeler;
 
 
 /***/ }),
@@ -27323,12 +27337,16 @@ module.exports.shellSync = (cmd, opts) => handleShell(module.exports.sync, cmd, 
 /***/ }),
 
 /***/ 962:
-/***/ (function(__unusedmodule, __unusedexports, __webpack_require__) {
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
 
 "use strict";
 
-const SuperLabeler = __webpack_require__(325);
-SuperLabeler.run();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const index_1 = __importDefault(__webpack_require__(325));
+index_1.default.run();
 
 
 /***/ }),

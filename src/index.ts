@@ -1,10 +1,12 @@
-const init = () => {
-  // MARK: - External dependencies
-  const github = require('@actions/github');
-  const core = require('@actions/core');
-  const path = require('path');
+// MARK: - External dependencies
 
-  const superLabeler = require('./superLabeler');
+import * as core from '@actions/core';
+import * as github from '@actions/github';
+import path from 'path';
+
+import superLabeler from './superLabeler';
+
+const init = () => {
 
   const { GITHUB_WORKSPACE = '' } = process.env;
 
@@ -26,4 +28,4 @@ const init = () => {
   return new superLabeler(new github.GitHub(GITHUB_TOKEN), options);
 }
 
-module.exports = init()
+export default init()

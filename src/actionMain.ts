@@ -1,3 +1,3 @@
-const SuperLabeler = require('./index');
+import SuperLabeler from './index'
 
 SuperLabeler.run();
